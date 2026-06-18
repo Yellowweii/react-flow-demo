@@ -5,6 +5,11 @@ import {
   Background,
   BackgroundVariant,
   Controls,
+  Handle,
+  MarkerType,
+  MiniMap,
+  Position,
+  ReactFlow,
   addEdge,
   applyEdgeChanges,
   applyNodeChanges,
@@ -13,11 +18,6 @@ import {
   type EdgeChange,
   type Node,
   type NodeChange,
-  ReactFlow,
-  MiniMap,
-  MarkerType,
-  Handle,
-  Position,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
@@ -76,6 +76,12 @@ const initialEdges: Edge[] = [
 ];
 
 type CardData = { title: string; summary: string; color: string };
+const palette = ["#22c55e", "#7c3aed", "#06b6d4", "#f97316", "#ef4444"];
+const defaultCardData: CardData = {
+  title: "New Node",
+  summary: "双击右侧面板编辑节点信息",
+  color: "#38bdf8",
+};
 
 function WorkflowNode({ data }: { data: CardData }) {
   return (
@@ -127,23 +133,27 @@ export default function Page() {
   }, []);
 
   const addNode = () => {
-    const id = `step-${nodes.length + 1}`;
+    const id = `step-${Date.now()}`;
     setNodes((current) => [
       ...current,
       {
         id,
         type: "custom",
-        position: { x: 140 + current.length * 38, y: 420 },
+        position: { x: 120 + current.length * 42, y: 180 + current.length * 20 },
         data: {
+          ...defaultCardData,
           title: `Step ${current.length + 1}`,
-          summary: "点击右侧卡片可编辑内容",
-          color: "#38bdf8",
+          color: palette[current.length % palette.length],
         },
       } as Node<CardData>,
     ]);
+    setSelectedNodeId(id);
   };
 
-  const updateSelectedNode = (field: "title" | "summary", value: string) => {
+  const updateSelectedNode = (
+    field: keyof CardData,
+    value: string,
+  ) => {
     if (!selectedNode) return;
     setNodes((current) =>
       current.map((node) =>
@@ -163,6 +173,13 @@ export default function Page() {
     setSelectedNodeId(null);
   };
 
+  const exportJson = () => {
+    const payload = JSON.stringify({ nodes, edges }, null, 2);
+    if (typeof window !== "undefined") {
+      window.alert(payload);
+    }
+  };
+
   return (
     <main className="shell">
       <section className="hero">
@@ -179,6 +196,9 @@ export default function Page() {
           </button>
           <button className="secondary" onClick={resetGraph}>
             重置画布
+          </button>
+          <button className="secondary" onClick={exportJson}>
+            导出 JSON
           </button>
         </div>
       </section>
@@ -226,6 +246,15 @@ export default function Page() {
                     }
                   />
                 </label>
+                <label>
+                  颜色
+                  <input
+                    value={selectedNode.data.color}
+                    onChange={(e) =>
+                      updateSelectedNode("color", e.target.value)
+                    }
+                  />
+                </label>
                 <div className="meta-row">
                   <span>ID</span>
                   <strong>{selectedNode.id}</strong>
@@ -240,7 +269,8 @@ export default function Page() {
             <h3>使用说明</h3>
             <ul>
               <li>拖拽节点调整流程位置</li>
-              <li>从节点右侧连接点拖到其他节点建立连线</li>
+              <li>从节点左右连接点拖到其他节点建立连线</li>
+              <li>点击节点后可在右侧直接修改标题、描述和颜色</li>
               <li>支持缩放、平移和小地图导航</li>
             </ul>
           </div>
