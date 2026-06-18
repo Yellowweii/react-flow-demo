@@ -21,7 +21,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
-const initialNodes: Node[] = [
+const initialNodes: Node<CardData>[] = [
   {
     id: "start",
     type: "custom",
@@ -93,16 +93,19 @@ function WorkflowNode({ data }: { data: CardData }) {
 }
 
 export default function Page() {
-  const [nodes, setNodes] = useState(initialNodes);
-  const [edges, setEdges] = useState(initialEdges);
+  const [nodes, setNodes] = useState<Node<CardData>[]>(initialNodes);
+  const [edges, setEdges] = useState<Edge[]>(initialEdges);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
   const nodeTypes = useMemo(() => ({ custom: WorkflowNode }), []);
 
-  const selectedNode = nodes.find((node) => node.id === selectedNodeId) ?? null;
+  const selectedNode =
+    nodes.find((node) => node.id === selectedNodeId) ?? null;
 
   const onNodesChange = useCallback((changes: NodeChange[]) => {
-    setNodes((current) => applyNodeChanges(changes, current));
+    setNodes((current) =>
+      applyNodeChanges(changes, current) as Node<CardData>[],
+    );
   }, []);
 
   const onEdgesChange = useCallback((changes: EdgeChange[]) => {
@@ -136,7 +139,7 @@ export default function Page() {
           summary: "点击右侧卡片可编辑内容",
           color: "#38bdf8",
         },
-      },
+      } as Node<CardData>,
     ]);
   };
 
@@ -145,7 +148,10 @@ export default function Page() {
     setNodes((current) =>
       current.map((node) =>
         node.id === selectedNode.id
-          ? { ...node, data: { ...node.data, [field]: value } }
+          ? {
+              ...node,
+              data: { ...node.data, [field]: value } as CardData,
+            }
           : node,
       ),
     );
